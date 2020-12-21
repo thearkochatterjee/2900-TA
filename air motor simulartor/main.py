@@ -18,7 +18,7 @@ frame_controls.grid(row=1,column=1)
 activate_cylinders = []
 deactivate_cylinders = []
 
-for i in range(1,6):
+for i in range(1,7):
     activate_cylinders.append(Image.open("cylinder "+ str(i)+" activate.png"))
     deactivate_cylinders.append(Image.open("cylinder "+str(i)+" deactivate.png"))
 
