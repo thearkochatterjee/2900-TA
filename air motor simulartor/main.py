@@ -1,5 +1,7 @@
 from tkinter import *
 from tkinter import messagebox
+from PIL import Image, ImageTk
+
 # pip install pyserial
 
 root = Tk()
@@ -12,6 +14,13 @@ frame_serial_monitor = LabelFrame(root, text="Sim Serial Monitor")
 frame_motor.grid(row=0,column=0,columnspan=2)
 frame_translate.grid(row=1,column=0)
 frame_controls.grid(row=1,column=1)
+
+activate_cylinders = []
+deactivate_cylinders = []
+
+for i in range(1,6):
+    activate_cylinders.append(Image.open("cylinder "+ str(i)+" activate.png"))
+    deactivate_cylinders.append(Image.open("cylinder "+str(i)+" deactivate.png"))
 
 def translate_code():
     global raw_code
@@ -27,6 +36,7 @@ def translate_code():
     ocode.close()
 
 def start():
+    return
 
 def revert_code():
     ocode = open(path,"w")
