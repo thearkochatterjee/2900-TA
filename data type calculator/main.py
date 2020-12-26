@@ -1,4 +1,5 @@
 from tkinter import *
+import tkinter.font as font
 
 root = Tk()
 root.title("Data Type Calculator")
@@ -126,9 +127,19 @@ def divide():
             Label(frame_result, text="Error: Divide by Zero").grid(row=0, column=0)
 
 
-cmdadd = Button(frame_op, text="+", command=add, width = 5, height=2).grid(row=0,column=0)
-cmdsubtract = Button(frame_op, text="-", command=subtract, width = 5, height=2).grid(row=0,column=1)
-cmdmultiply = Button(frame_op, text="*", command=multiply, width = 5, height=2).grid(row=0,column=2)
-cmddivide = Button(frame_op, text="/", command=divide, width = 5, height=2).grid(row=0,column=3)
+myfont = font.Font(size=20)
+
+cmdadd = Button(frame_op, text="+", command=add, width = 2, padx=5)
+cmdadd['font'] = myfont
+cmdadd.grid(row=0,column=0, padx=10)
+cmdsubtract = Button(frame_op, text="-", command=subtract, width=2, padx=5)
+cmdsubtract['font'] = myfont
+cmdsubtract.grid(row=0,column=1, padx=10)
+cmdmultiply = Button(frame_op, text="*", command=multiply, width=2, padx=5)
+cmdmultiply['font'] = myfont
+cmdmultiply.grid(row=0,column=2, padx=10)
+cmddivide = Button(frame_op, text="/", command=divide, width=2, padx=5)
+cmddivide['font'] = myfont
+cmddivide.grid(row=0,column=3, padx=10)
 
 root.mainloop()
