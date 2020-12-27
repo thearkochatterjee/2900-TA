@@ -18,23 +18,20 @@ frame_serial_monitor = LabelFrame(root, text="Sim Serial Monitor")
 frame_motor.grid(row=0, column=0)
 frame_translate.grid(row=1, column=0)
 frame_controls.grid(row=1, column=1)
-frame_serial_monitor.grid(row=0,column=1)
+frame_serial_monitor.grid(row=0, column=1)
 
 Label(frame_controls, text="COM Port:").grid(row=1, column=0)
 txtport = Entry(frame_controls)
 txtport.grid(row=1, column=1)
-Label(frame_controls, text="Number of Iterations to Run Motor for:").grid(row=2, column=0)
-txtiteration = Entry(frame_controls)
-txtiteration.insert(0,"10")
-txtiteration.grid(row=2, column=1)
 
 img_air_motor = Image.open("air motor.png")
 activate = Image.open("activate cylinder.png")
 deactivate = Image.open("deactivate cylinder.png")
 
-num_iterations = 0
-serial_count = 0
+num_iterations = 10
 translated = False
+show_prompt = True
+
 
 def translate_digitalwrite(line):
     if line.startswith("digitalWrite"):
@@ -47,7 +44,7 @@ def translate_digitalwrite(line):
             pinout = "\"" + pinvalue + "\""
         else:
             pinout = pinvalue
-        return "Serial.println(" + pinout + "+\",\"+" + signal + ");"
+        return "Serial.println(%" + pinout + "+\",\"+" + signal + "-);"
 
 
 def translate_code():
@@ -74,15 +71,13 @@ def translate_code():
         ocode = open(path, "w")
         ocode.writelines(trans_code)
         ocode.close()
-        messagebox.showinfo("Translation Complete",
-                            "Arduino Code has been translated. Please re-upload code to arduino.")
+        if show_prompt:
+            messagebox.showinfo("Translation Complete",
+                                "Arduino Code has been translated. Please re-upload code to arduino.")
 
 
 def print_to_serial_monitor(line):
-    global serial_count
-    serial_count += 1
-    Label(frame_serial_monitor, text=line).grid(row=serial_count, column=0)
-
+    Label(frame_serial_monitor, text=line).pack()
 
 
 def start():
@@ -93,12 +88,9 @@ def start():
             serial_count = 0
             port = "COM" + txtport.get()
             try:
-                num_iterations = int(txtiteration.get())
-            except:
-                messagebox.showerror("Invalid Iteration", "Please put in an integer value for the number of "
-                                                          "iterations to run the motor.")
-            try:
                 ser = serial.Serial(port, 9600)
+                for wid in frame_serial_monitor.winfo_children():
+                    wid.destroy()
                 for i in range(0, num_iterations):
                     data = ser.readline()
                     data = data.decode('utf-8').strip()
@@ -117,7 +109,8 @@ def revert_code():
         ocode = open(path, "w")
         ocode.writelines(raw_code)
         ocode.close()
-        messagebox.showinfo("Code Reverted", "The Arduino Code has been changed back to the original code.")
+        if show_prompt:
+            messagebox.showinfo("Code Reverted", "The Arduino Code has been changed back to the original code.")
     else:
         messagebox.showerror("No Code Path", "No code path has been declared")
 
@@ -127,16 +120,32 @@ def clear_code():
     raw_code = ""
     trans_code = ""
     translated = False
+    for wid in frame_serial_monitor.winfo_children():
+        wid.destroy()
+
+
+def prompt():
+    global show_prompt
+    global cmdprompt
+    show_prompt = not show_prompt
+    cmdprompt.destroy()
+    if show_prompt:
+        cmdprompt = Button(frame_translate, text="Hide Prompt Message", command=prompt)
+    else:
+        cmdprompt = Button(frame_translate, text="Show Prompt Message", command=prompt)
+    cmdprompt.grid(row=4, column=0)
 
 
 cmdtranslatecode = Button(frame_translate, text="Translate Code", command=translate_code)
 cmdrevert = Button(frame_translate, text="Revert Code", command=revert_code)
 cmdstart = Button(frame_controls, text="Start Motor", command=start)
 cmdclear = Button(frame_translate, text="Clear Code Memory", command=clear_code)
+cmdprompt = Button(frame_translate, text="Hide Prompt Message", command=prompt)
 
 cmdtranslatecode.grid(row=1, column=0)
 cmdrevert.grid(row=2, column=0)
 cmdstart.grid(row=0, column=0, columnspan=2)
 cmdclear.grid(row=3, column=0)
+cmdprompt.grid(row=4, column=0)
 
 root.mainloop()
