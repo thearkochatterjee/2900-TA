@@ -10,16 +10,19 @@ import time
 root = Tk()
 root.title("Air Motor Simulator")
 
+# Creating Subframes
 frame_motor = LabelFrame(root, text="Air Motor")
 frame_controls = LabelFrame(root, text="Controls")
 frame_translate = LabelFrame(root, text="Translate Code")
 frame_serial_monitor = LabelFrame(root, text="Sim Serial Monitor")
 
+# Putting Frames in GUI
 frame_motor.grid(row=0, column=0)
 frame_translate.grid(row=1, column=0)
 frame_controls.grid(row=1, column=1)
 frame_serial_monitor.grid(row=0, column=1)
 
+# COM Port Input
 Label(frame_controls, text="COM Port:").grid(row=1, column=0)
 txtport = Entry(frame_controls)
 txtport.grid(row=1, column=1)
@@ -44,7 +47,7 @@ def translate_digitalwrite(line):
             pinout = "\"" + pinvalue + "\""
         else:
             pinout = pinvalue
-        return "Serial.println(%" + pinout + "+\",\"+" + signal + "-);"
+        return "Serial.println(\"%\"+" + pinout + "+\",\"+" + signal + ");"
 
 
 def translate_code():
@@ -58,9 +61,11 @@ def translate_code():
     if path == "":
         messagebox.showerror("No Valid Path", "There is no path for code entered!")
     else:
+        # Reading Code from Arduino File
         ocode = open(path, "r")
         raw_code = ocode.readlines()
         ocode.close()
+        # Translating Code
         for line in raw_code:
             try:
                 if line.index("digitalWrite") >= 0:
@@ -68,6 +73,7 @@ def translate_code():
             except ValueError:
                 trans_code.append(line)
         translated = True
+        # Writing Translated Code to Arduino File
         ocode = open(path, "w")
         ocode.writelines(trans_code)
         ocode.close()
@@ -76,8 +82,39 @@ def translate_code():
                                 "Arduino Code has been translated. Please re-upload code to arduino.")
 
 
+motor_state = {}
+
+def update_display():
+    if motor_state[2] and not motor_state[3]:
+
+    else:
+
+    if motor_state[4] and not motor_state[5]:
+
+    else:
+
+    if motor_state[6] and not motor_state[7]:
+
+    else:
+
+
+
+def update_pins(pin, signal):
+    global motor_state
+    if signal == "HIGH":
+        motor_state.update({pin: True})
+    else:
+        motor_state.update({pin: False})
+    update_display()
+
+
 def print_to_serial_monitor(line):
-    Label(frame_serial_monitor, text=line).pack()
+    if line.startswith("%"):
+        pindisp = int(line.split(",")[0][1:])
+        signaldisp = line.split(",")[1]
+        update_pins(pindisp, signaldisp)
+    else:
+        Label(frame_serial_monitor, text=line).pack()
 
 
 def start():
@@ -122,8 +159,10 @@ def clear_code():
     translated = False
     for wid in frame_serial_monitor.winfo_children():
         wid.destroy()
+    for w in frame_motor.winfo_children():
+        w.destroy()
 
-
+# Need to change to check box
 def prompt():
     global show_prompt
     global cmdprompt
@@ -135,13 +174,14 @@ def prompt():
         cmdprompt = Button(frame_translate, text="Show Prompt Message", command=prompt)
     cmdprompt.grid(row=4, column=0)
 
-
+# Initializing Buttons
 cmdtranslatecode = Button(frame_translate, text="Translate Code", command=translate_code)
 cmdrevert = Button(frame_translate, text="Revert Code", command=revert_code)
 cmdstart = Button(frame_controls, text="Start Motor", command=start)
 cmdclear = Button(frame_translate, text="Clear Code Memory", command=clear_code)
 cmdprompt = Button(frame_translate, text="Hide Prompt Message", command=prompt)
 
+# Placing Buttons in Grid
 cmdtranslatecode.grid(row=1, column=0)
 cmdrevert.grid(row=2, column=0)
 cmdstart.grid(row=0, column=0, columnspan=2)
