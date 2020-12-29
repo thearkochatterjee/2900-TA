@@ -48,7 +48,7 @@ for i in range(0, 6):
     if i < 3:
         lblcylinder[i].grid(row=i, column=0)
     else:
-        lblcylinder[i].grid(row=5-i, column=1)
+        lblcylinder[i].grid(row=5 - i, column=1)
 
 
 def translate_digitalwrite(line):
@@ -62,7 +62,12 @@ def translate_digitalwrite(line):
             pinout = "\"" + pinvalue + "\""
         else:
             pinout = pinvalue
-        return "Serial.println(\"%\"+" + pinout + "+\",\"+" + signal + ");"
+        return "Serial.println(\"%\"+String(" + pinout + ")+\",\"+String(" + signal + "));"
+    if line.index("digitalRead") > -1:
+        replacetext = line[line.index("digitalRead"):len(line)]
+        temp = line.replace(replacetext, "atoi(Serial.readStringUntil(\"\\n\"));")
+        print(temp)
+        return temp
 
 
 def translate_code():
@@ -83,7 +88,7 @@ def translate_code():
         # Translating Code
         for line in raw_code:
             try:
-                if line.index("digitalWrite") >= 0:
+                if line.index("digital") >= 0:
                     trans_code.append(translate_digitalwrite(line.strip()) + "\n")
             except ValueError:
                 trans_code.append(line)
@@ -106,7 +111,7 @@ def cylinder_number(test_pin):
     temp = test_pin
     if test_pin % 2 == 1:
         temp -= 1
-    return int(test_pin / 2)-1
+    return int(test_pin / 2) - 1
 
 
 def cylinder_state_detection(intake_pin, exhaust_pin):
@@ -119,7 +124,7 @@ def cylinder_state_detection(intake_pin, exhaust_pin):
 def update_display():
     pins = [2, 4, 6, 8, 10, 12]
     for i in pins:
-        if cylinder_state_detection(i,i+1):
+        if cylinder_state_detection(i, i + 1):
             lblcylinder[cylinder_number(i)].config(image=activate_cylinder[cylinder_number(i)])
         else:
             lblcylinder[cylinder_number(i)].config(image=deactivate_cylinder[cylinder_number(i)])
@@ -127,7 +132,7 @@ def update_display():
 
 def update_pins(pin, signal):
     global motor_state
-    if signal == "HIGH":
+    if signal == "1":
         motor_state[pin] = True
     else:
         motor_state[pin] = False
@@ -231,7 +236,5 @@ for i in range(2, 14):
         lblpins[i - 2].grid(row=1, column=i - 8, padx=5, pady=5)
     else:
         lblpins[i - 2].grid(row=0, column=i - 2, padx=5, pady=5)
-update_pins(2,"LOW")
-
 
 root.mainloop()
