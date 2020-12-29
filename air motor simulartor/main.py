@@ -31,6 +31,25 @@ num_iterations = 10
 translated = False
 show_prompt = True
 
+# Adding Cylinder Models
+blank_cylinder = []
+activate_cylinder = []
+deactivate_cylinder = []
+
+for i in range(1, 7):
+    blank_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " blank.jpg")))
+    activate_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " activate.jpg")))
+    deactivate_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " deactivate.jpg")))
+
+global lblcylinder
+lblcylinder = []
+for i in range(0, 6):
+    lblcylinder.append(Label(frame_motor, image=blank_cylinder[i]))
+    if i < 3:
+        lblcylinder[i].grid(row=i, column=0)
+    else:
+        lblcylinder[i].grid(row=5-i, column=1)
+
 
 def translate_digitalwrite(line):
     if line.startswith("digitalWrite"):
@@ -87,11 +106,11 @@ def cylinder_number(test_pin):
     temp = test_pin
     if test_pin % 2 == 1:
         temp -= 1
-    return test_pin / 2
+    return int(test_pin / 2)-1
 
 
 def cylinder_state_detection(intake_pin, exhaust_pin):
-    if intake_pin and not exhaust_pin:
+    if motor_state[intake_pin] and not motor_state[exhaust_pin]:
         return True
     else:
         return False
@@ -99,11 +118,11 @@ def cylinder_state_detection(intake_pin, exhaust_pin):
 
 def update_display():
     pins = [2, 4, 6, 8, 10, 12]
-    # for i in pins:
-    #     if cylinder_state_detection(i,i+1):
-    #         # Overlay Activate
-    #     else:
-    #         # Overlay Deactivate
+    for i in pins:
+        if cylinder_state_detection(i,i+1):
+            lblcylinder[cylinder_number(i)].config(image=activate_cylinder[cylinder_number(i)])
+        else:
+            lblcylinder[cylinder_number(i)].config(image=deactivate_cylinder[cylinder_number(i)])
 
 
 def update_pins(pin, signal):
@@ -202,33 +221,17 @@ cmdstart.grid(row=0, column=0, columnspan=2)
 cmdclear.grid(row=3, column=0)
 cmdprompt.grid(row=4, column=0)
 
-# Creating Buttons to Indicate Pin States
+# Creating Pin Indicators
 frame_pins = LabelFrame(frame_motor, text="Pin State")
 frame_pins.grid(row=6, column=0, columnspan=2)
 lblpins = []
 for i in range(2, 14):
     lblpins.append(Label(frame_pins, text="Pin " + str(i)))
     if i > 7:
-        lblpins[i - 2].grid(row=1, column=i - 8)
+        lblpins[i - 2].grid(row=1, column=i - 8, padx=5, pady=5)
     else:
-        lblpins[i - 2].grid(row=0, column=i - 2)
+        lblpins[i - 2].grid(row=0, column=i - 2, padx=5, pady=5)
+update_pins(2,"LOW")
 
-# Adding Cylinder Models
-blank_cylinder = []
-activate_cylinder = []
-deactivate_cylinder = []
-
-for i in range(1, 7):
-    blank_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " blank.jpg")))
-    activate_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " activate.jpg")))
-    deactivate_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " deactivate.jpg")))
-
-lblcylinder = []
-for i in range(0, 6):
-    lblcylinder.append(Label(frame_motor, image=blank_cylinder[i]))
-    if i < 3:
-        lblcylinder[i].grid(row=i, column=0)
-    else:
-        lblcylinder[i].grid(row=5-i, column=1)
 
 root.mainloop()
