@@ -82,29 +82,44 @@ def translate_code():
                                 "Arduino Code has been translated. Please re-upload code to arduino.")
 
 
-motor_state = {}
+motor_state = list()
+for i in range(0, 14):
+    motor_state[i] = False
+
+def cylinder_number(test_pin):
+    temp = test_pin
+    if test_pin % 2 == 1:
+        temp -= 1
+    return test_pin/2
+
+def cylinder_state_detection(intake_pin, exhaust_pin):
+    if intake_pin and not exhaust_pin:
+        return True
+    else:
+        return False
+
 
 def update_display():
-    if motor_state[2] and not motor_state[3]:
-
-    else:
-
-    if motor_state[4] and not motor_state[5]:
-
-    else:
-
-    if motor_state[6] and not motor_state[7]:
-
-    else:
+    pins = [2, 4, 6, 8, 10, 12]
+    for i in pins:
+        if cylinder_state_detection(i,i+1):
+            # Overlay Activate
+        else:
+            # Overlay Deactivate
 
 
 
 def update_pins(pin, signal):
     global motor_state
     if signal == "HIGH":
-        motor_state.update({pin: True})
+        motor_state[pin] = True
     else:
-        motor_state.update({pin: False})
+        motor_state[pin] = False
+    for i in range(2, len(motor_state)):
+        if motor_state[i]:
+            lblpins[i - 2].config(bg="green")
+        else:
+            lblpins[i - 2].config(bg="red")
     update_display()
 
 
@@ -162,6 +177,7 @@ def clear_code():
     for w in frame_motor.winfo_children():
         w.destroy()
 
+
 # Need to change to check box
 def prompt():
     global show_prompt
@@ -173,6 +189,7 @@ def prompt():
     else:
         cmdprompt = Button(frame_translate, text="Show Prompt Message", command=prompt)
     cmdprompt.grid(row=4, column=0)
+
 
 # Initializing Buttons
 cmdtranslatecode = Button(frame_translate, text="Translate Code", command=translate_code)
@@ -187,5 +204,16 @@ cmdrevert.grid(row=2, column=0)
 cmdstart.grid(row=0, column=0, columnspan=2)
 cmdclear.grid(row=3, column=0)
 cmdprompt.grid(row=4, column=0)
+
+# Creating Buttons to Indicate Pin States
+frame_pins = LabelFrame(frame_motor, text="Pin State")
+frame_pins.grid(row=1, column=0)
+lblpins = []
+for i in range(2, 14):
+    lblpins.append(Label(frame_pins, text="Pin " + str(i)))
+    if i > 7:
+        lblpins[i - 2].grid(row=1, column=i - 8)
+    else:
+        lblpins[i - 2].grid(row=0, column=i - 2)
 
 root.mainloop()
