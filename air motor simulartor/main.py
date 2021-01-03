@@ -62,7 +62,6 @@ def translate_digitalwrite(line):
         replacetext = line[line.index("digitalRead"):len(line)]
         temp = line.replace(replacetext, "atoi(Serial.read());")
         temp = "Serial.println(\"ping\");\nwhile(Serial.available()==0){}\n"+temp
-        print(temp)
         return temp
 
 
@@ -153,28 +152,27 @@ def start():
         else:
             serial_count = 0
             port = "COM" + txtport.get()
-            startcylinder = 1
-            ser = serial.Serial(port, 9600)
-            for wid in frame_serial_monitor.winfo_children():
-                wid.destroy()
-            for i in range(0, num_iterations):
-                data = ser.readline()
-                data = data.decode('utf-8').strip()
-                print_to_serial_monitor(data)
-                root.update()
-                if not cylinder_state(1) and not cylinder_state(2) and not cylinder_state(3) and not cylinder_state(
-                        4) and not cylinder_state(5) and not cylinder_state(6) and not ready:
-                    ready = True
-                if data == "ping":
-                    ser.write('1'.encode('utf-8'))
-                    ser.flush()
-                    startcylinder += 1
-                    if startcylinder == 7:
-                        startcylinder = 1
-            # try:
-            #
-            # except:
-            #     messagebox.showerror("Port Error", "Invalid Port")
+            try:
+                startcylinder = 1
+                ser = serial.Serial(port, 9600)
+                for wid in frame_serial_monitor.winfo_children():
+                    wid.destroy()
+                for i in range(0, num_iterations):
+                    data = ser.readline()
+                    data = data.decode('utf-8').strip()
+                    print_to_serial_monitor(data)
+                    root.update()
+                    if not cylinder_state(1) and not cylinder_state(2) and not cylinder_state(3) and not cylinder_state(
+                            4) and not cylinder_state(5) and not cylinder_state(6) and not ready:
+                        ready = True
+                    if data == "ping":
+                        ser.write('1'.encode('utf-8'))
+                        ser.flush()
+                        startcylinder += 1
+                        if startcylinder == 7:
+                            startcylinder = 1
+            except:
+                messagebox.showerror("Port Error", "Invalid Port")
 
     else:
         messagebox.showerror("Code Translation", "Code has not been translated")
