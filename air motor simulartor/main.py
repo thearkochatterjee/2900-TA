@@ -4,6 +4,8 @@ from PIL import Image, ImageTk
 from tkinter import filedialog
 import serial
 import time
+import subprocess
+import webbrowser
 
 # pip install pyserial
 
@@ -38,8 +40,12 @@ deactivate_cylinder = []
 
 for i in range(1, 7):
     blank_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " blank.jpg")))
-    activate_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " activate.jpg")))
-    deactivate_cylinder.append(ImageTk.PhotoImage(Image.open("cylinder " + str(i) + " deactivate.jpg")))
+    temp = Image.open("cylinder " + str(i) + " activate.jpg")
+    temp = temp.resize((blank_cylinder[i - 1].width(), blank_cylinder[i - 1].height()))
+    activate_cylinder.append(ImageTk.PhotoImage(temp))
+    temp = Image.open("cylinder " + str(i) + " deactivate.jpg")
+    temp = temp.resize((blank_cylinder[i - 1].width(), blank_cylinder[i - 1].height()))
+    deactivate_cylinder.append(ImageTk.PhotoImage(temp))
 
 global lblcylinder
 lblcylinder = []
@@ -61,7 +67,7 @@ def translate_digitalwrite(line):
     if line.index("digitalRead") > -1:
         replacetext = line[line.index("digitalRead"):len(line)]
         temp = line.replace(replacetext, "atoi(Serial.read());")
-        temp = "Serial.println(\"ping\");\nwhile(Serial.available()==0){}\n"+temp
+        temp = "Serial.println(\"ping\");\nwhile(Serial.available()==0){}\n" + temp
         return temp
 
 
@@ -95,6 +101,7 @@ def translate_code():
         if show_prompt:
             messagebox.showinfo("Translation Complete",
                                 "Arduino Code has been translated. Please re-upload code to arduino.")
+        webbrowser.open(path)
 
 
 motor_state = list()
