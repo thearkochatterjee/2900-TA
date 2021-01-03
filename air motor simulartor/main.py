@@ -27,7 +27,7 @@ Label(frame_controls, text="COM Port:").grid(row=1, column=0)
 txtport = Entry(frame_controls)
 txtport.grid(row=1, column=1)
 
-num_iterations = 10
+num_iterations = 300
 translated = False
 show_prompt = True
 
@@ -56,16 +56,12 @@ def translate_digitalwrite(line):
         components = line.split(",")
         pinvalue = components[0][(components[0].index("(") + 1):]
         signal = components[1][:(components[1].index(")"))]
-        pinout = ""
-        signalout = ""
-        if pinvalue[0] in "0123456789":
-            pinout = "\"" + pinvalue + "\""
-        else:
-            pinout = pinvalue
+        pinout = pinvalue
         return "Serial.println(\"%\"+String(" + pinout + ")+\",\"+String(" + signal + "));"
     if line.index("digitalRead") > -1:
         replacetext = line[line.index("digitalRead"):len(line)]
-        temp = line.replace(replacetext, "atoi(Serial.readStringUntil(\"\\n\"));")
+        temp = line.replace(replacetext, "atoi(Serial.read());")
+        temp = "Serial.println(\"ping\");\nwhile(Serial.available()==0){}\n"+temp
         print(temp)
         return temp
 
@@ -107,13 +103,6 @@ for i in range(0, 14):
     motor_state.append(False)
 
 
-def cylinder_number(test_pin):
-    temp = test_pin
-    if test_pin % 2 == 1:
-        temp -= 1
-    return int(test_pin / 2) - 1
-
-
 def cylinder_state_detection(intake_pin, exhaust_pin):
     if motor_state[intake_pin] and not motor_state[exhaust_pin]:
         return True
@@ -121,13 +110,16 @@ def cylinder_state_detection(intake_pin, exhaust_pin):
         return False
 
 
+def cylinder_state(cylinder_num):
+    return cylinder_state_detection(cylinder_num * 2, cylinder_num * 2 + 1)
+
+
 def update_display():
-    pins = [2, 4, 6, 8, 10, 12]
-    for i in pins:
-        if cylinder_state_detection(i, i + 1):
-            lblcylinder[cylinder_number(i)].config(image=activate_cylinder[cylinder_number(i)])
+    for i in range(1, 7):
+        if cylinder_state(i):
+            lblcylinder[i - 1].config(image=activate_cylinder[i - 1])
         else:
-            lblcylinder[cylinder_number(i)].config(image=deactivate_cylinder[cylinder_number(i)])
+            lblcylinder[i - 1].config(image=deactivate_cylinder[i - 1])
 
 
 def update_pins(pin, signal):
@@ -149,27 +141,40 @@ def print_to_serial_monitor(line):
         pindisp = int(line.split(",")[0][1:])
         signaldisp = line.split(",")[1]
         update_pins(pindisp, signaldisp)
-    else:
+    elif line != "ping":
         Label(frame_serial_monitor, text=line).pack()
 
 
 def start():
+    ready = False
     if translated:
         if txtport.get() == "":
             messagebox.showerror("Invalid COM Port", "COM port must be entered")
         else:
             serial_count = 0
             port = "COM" + txtport.get()
-            try:
-                ser = serial.Serial(port, 9600)
-                for wid in frame_serial_monitor.winfo_children():
-                    wid.destroy()
-                for i in range(0, num_iterations):
-                    data = ser.readline()
-                    data = data.decode('utf-8').strip()
-                    print_to_serial_monitor(data)
-            except:
-                messagebox.showerror("Port Error", "Invalid Port")
+            startcylinder = 1
+            ser = serial.Serial(port, 9600)
+            for wid in frame_serial_monitor.winfo_children():
+                wid.destroy()
+            for i in range(0, num_iterations):
+                data = ser.readline()
+                data = data.decode('utf-8').strip()
+                print_to_serial_monitor(data)
+                root.update()
+                if not cylinder_state(1) and not cylinder_state(2) and not cylinder_state(3) and not cylinder_state(
+                        4) and not cylinder_state(5) and not cylinder_state(6) and not ready:
+                    ready = True
+                if data == "ping":
+                    ser.write('1'.encode('utf-8'))
+                    ser.flush()
+                    startcylinder += 1
+                    if startcylinder == 7:
+                        startcylinder = 1
+            # try:
+            #
+            # except:
+            #     messagebox.showerror("Port Error", "Invalid Port")
 
     else:
         messagebox.showerror("Code Translation", "Code has not been translated")
