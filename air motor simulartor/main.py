@@ -1,16 +1,17 @@
-from tkinter import *
-from tkinter import messagebox
-from PIL import Image, ImageTk
-from tkinter import filedialog
-import serial
-import time
-import subprocess
+import os
 import webbrowser
+from tkinter import *
+from tkinter import filedialog
+from tkinter import messagebox
+
+import serial
+from PIL import Image, ImageTk
 
 # pip install pyserial
 
 root = Tk()
 root.title("Air Motor Simulator")
+root.iconbitmap("icon.ico")
 
 # Creating Subframes
 frame_motor = LabelFrame(root, text="Air Motor")
@@ -19,10 +20,11 @@ frame_translate = LabelFrame(root, text="Translate Code")
 frame_serial_monitor = LabelFrame(root, text="Sim Serial Monitor")
 
 # Putting Frames in GUI
-frame_motor.grid(row=0, column=0)
-frame_translate.grid(row=1, column=0)
+frame_motor.grid(row=0, column=0, rowspan=3)
+frame_translate.grid(row=0, column=1)
 frame_controls.grid(row=1, column=1)
-frame_serial_monitor.grid(row=0, column=1)
+frame_serial_monitor.grid(row=2, column=1)
+Label(frame_serial_monitor).pack()
 
 # COM Port Input
 Label(frame_controls, text="COM Port:").grid(row=1, column=0)
@@ -76,18 +78,23 @@ def translate_code():
     global trans_code
     global path
     global translated
+    global pathtrans
     trans_code = []
     path = filedialog.askopenfilename(initialdir="D:/", title="Select A File",
                                       filetypes=(("ino files", "*.ino"), ("all files", "*.*")))
     if path == "":
         messagebox.showerror("No Valid Path", "There is no path for code entered!")
     else:
+        pathtrans = path[:(path.index(".ino"))] + "_temp.ino"
         # Reading Code from Arduino File
         ocode = open(path, "r")
         raw_code = ocode.readlines()
+        raw_code_save = raw_code
         ocode.close()
         # Translating Code
+        raw_code_edit = []
         for line in raw_code:
+            raw_code_edit.append("// "+line)
             try:
                 if line.index("digital") >= 0:
                     trans_code.append(translate_digitalwrite(line.strip()) + "\n")
@@ -95,13 +102,16 @@ def translate_code():
                 trans_code.append(line)
         translated = True
         # Writing Translated Code to Arduino File
-        ocode = open(path, "w")
+        rcode = open(path,"w")
+        rcode.writelines(raw_code_edit)
+        rcode.close()
+        ocode = open(pathtrans, "w")
         ocode.writelines(trans_code)
         ocode.close()
         if show_prompt:
             messagebox.showinfo("Translation Complete",
                                 "Arduino Code has been translated. Please re-upload code to arduino.")
-        webbrowser.open(path)
+        webbrowser.open(pathtrans)
 
 
 motor_state = list()
@@ -173,11 +183,16 @@ def start():
                             4) and not cylinder_state(5) and not cylinder_state(6) and not ready:
                         ready = True
                     if data == "ping":
-                        ser.write('1'.encode('utf-8'))
-                        ser.flush()
-                        startcylinder += 1
-                        if startcylinder == 7:
-                            startcylinder = 1
+                        if cylinder_state(startcylinder):
+                            ser.write('1'.encode('utf-8'))
+                            ser.flush()
+                            startcylinder += 1
+                            if startcylinder == 7:
+                                startcylinder = 1
+                        else:
+                            messagebox.showerror("Stall", "The air motor has stalled must run in clockwise direction.")
+                            print("stall")
+                            break
             except:
                 messagebox.showerror("Port Error", "Invalid Port")
 
@@ -192,6 +207,8 @@ def revert_code():
         ocode = open(path, "w")
         ocode.writelines(raw_code)
         ocode.close()
+        if os.path.exists(pathtrans):
+            os.remove(pathtrans)
         if show_prompt:
             messagebox.showinfo("Code Reverted", "The Arduino Code has been changed back to the original code.")
     else:
@@ -203,6 +220,8 @@ def clear_code():
     raw_code = ""
     trans_code = ""
     translated = False
+    if os.path.exists(pathtrans):
+        os.remove(pathtrans)
     for wid in frame_serial_monitor.winfo_children():
         wid.destroy()
     for w in frame_motor.winfo_children():
