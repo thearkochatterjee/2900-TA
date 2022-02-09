@@ -29,8 +29,7 @@ for item in itemmenu:
         tempnode = Node(msg[0], nodes[msg[1]])
         nodes[msg[0]] = tempnode
     else:
-        sys.exit("Error: Parent node does not exist\nParent node: "+msg[1]+"\nChild node: "+msg[0])
-
+        sys.exit("Error: Parent node does not exist\nParent node: " + msg[1] + "\nChild node: " + msg[0])
 
 # Displaying Tree in Console
 for pre, fill, node in RenderTree(menu):
@@ -38,3 +37,15 @@ for pre, fill, node in RenderTree(menu):
 
 # Displaying Tree as a png image
 DotExporter(menu).to_picture("menu.png")
+
+# Menu Interaction
+print("\n\nMenu:")
+selected = menu
+while not selected.is_leaf:
+    for index, val in enumerate(selected.children):
+        print(str(index + 1) + ". " + val.name)
+    selecteditem = int(input("Selected Item:"))
+    selected = selected.children[selecteditem-1]
+
+print("\nItem Selected:")
+print(selected.name)
